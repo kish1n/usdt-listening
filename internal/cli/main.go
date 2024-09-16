@@ -1,9 +1,14 @@
 package cli
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
 	"github.com/alecthomas/kingpin"
 	"github.com/kish1n/usdt_listening/internal/config"
-	"github.com/kish1n/usdt_listening/internal/service"
 	"gitlab.com/distributed_lab/kit/kv"
 	"gitlab.com/distributed_lab/logan/v3"
 )
@@ -29,24 +34,23 @@ func Run(args []string) bool {
 	migrateUpCmd := migrateCmd.Command("up", "migrate db up")
 	migrateDownCmd := migrateCmd.Command("down", "migrate db down")
 
-	// custom commands go here...
-
 	cmd, err := app.Parse(args[1:])
 	if err != nil {
 		log.WithError(err).Error("failed to parse arguments")
 		return false
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	var wg sync.WaitGroup
+
 	switch cmd {
 	case serviceCmd.FullCommand():
-		service.Run(cfg)
+		runServices(ctx, cfg, &wg)
 	case migrateUpCmd.FullCommand():
 		err = MigrateUp(cfg)
 	case migrateDownCmd.FullCommand():
 		err = MigrateDown(cfg)
-
-	// handle any custom commands here in the same way
-
 	default:
 		log.Errorf("unknown command %s", cmd)
 		return false
@@ -55,5 +59,24 @@ func Run(args []string) bool {
 		log.WithError(err).Error("failed to exec cmd")
 		return false
 	}
+
+	gracefulStop := make(chan os.Signal, 1)
+	signal.Notify(gracefulStop, syscall.SIGTERM, syscall.SIGINT)
+
+	wgch := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(wgch)
+	}()
+
+	select {
+	case <-ctx.Done():
+		cfg.Log().WithError(ctx.Err()).Info("Interrupt signal received")
+		stop()
+		<-wgch
+	case <-wgch:
+		cfg.Log().Warn("all services stopped")
+	}
+
 	return true
 }

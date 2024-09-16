@@ -23,10 +23,9 @@ func (s *service) router(cfg config.Config) (chi.Router, error) {
 	)
 
 	r.Route("/", func(r chi.Router) {
-		r.Get("/listen", handlers.ListenForTransfers)
-		r.Get("/from/{address}", handlers.SortBySender)
-		r.Get("/to/{address}", handlers.SortByOrder)
-		r.Get("/by/{address}", handlers.SortByAddress)
+		r.Get("from/{address}", handlers.SortBySender)
+		r.Get("to/{address}", handlers.SortByOrder)
+		r.Get("by/{address}", handlers.SortByAddress)
 	})
 
 	logger.Info("Starting server on :8080")
