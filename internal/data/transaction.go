@@ -1,10 +1,14 @@
 package data
 
-import "time"
+import (
+	"time"
+)
 
 type TransactionQ interface {
-	Insert(trn TransactionData) (*TransactionData, error)
-	SortByParameter(address string, parameter string) ([]TransactionData, error)
+	Insert(trn TransactionData) error
+	FilterByFromAddress(address string) TransactionQ
+	FilterByToAddress(address string) TransactionQ
+	FilterByAddress(address string) TransactionQ
 }
 
 type TransactionData struct {
@@ -12,5 +16,5 @@ type TransactionData struct {
 	ToAddress   string    `db:"to_address"   json:"from_address"`
 	Value       int64     `db:"value"        json:"to_address"`
 	Id          string    `db:"id"           json:"value"`
-	Timestamp   time.Time `db:"timestamp"    json:"timestamp"`
+	CreatedAt   time.Time `db:"created_at"    json:"created_at"`
 }

@@ -29,7 +29,7 @@ type Transfer struct {
 var Client *ethclient.Client
 
 func ListenForTransfers(w http.ResponseWriter, r *http.Request) {
-	logger := helpers.Log(r)
+	logger := Log(r)
 
 	ProjectID := os.Getenv("API_KEY")
 
@@ -77,7 +77,7 @@ func ListenForTransfers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := helpers.DB(r)
+	db := DB(r)
 
 	for {
 		select {

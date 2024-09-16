@@ -5,7 +5,6 @@ import (
 	"github.com/kish1n/usdt_listening/internal/config"
 	"github.com/kish1n/usdt_listening/internal/data/pg"
 	"github.com/kish1n/usdt_listening/internal/service/handlers"
-	"github.com/kish1n/usdt_listening/internal/service/helpers"
 	"gitlab.com/distributed_lab/ape"
 	"net/http"
 )
@@ -18,8 +17,8 @@ func (s *service) router(cfg config.Config) (chi.Router, error) {
 		ape.RecoverMiddleware(s.log),
 		ape.LoganMiddleware(s.log),
 		ape.CtxMiddleware(
-			helpers.CtxLog(s.log),
-			helpers.CtxDB(pg.NewMasterQ(cfg.DB())),
+			handlers.CtxLog(s.log),
+			handlers.CtxDB(pg.NewMasterQ(cfg.DB())),
 		),
 	)
 
