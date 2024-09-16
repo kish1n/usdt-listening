@@ -10,7 +10,6 @@ allOf:
           - from_address
           - to_address
           - value
-          - id
           - created_at
         properties:
           from_address:
@@ -27,11 +26,6 @@ allOf:
             type: int
             example: 10
             description: exchange value
-          id:
-            type: string
-            pattern: '^0x[0-9a-fA-F]+$'
-            example: "0x2a2288cdceEeb2CF60..."
-            description: id deal
           created_at:
             type: string
             format: time.Time

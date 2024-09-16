@@ -6,3 +6,6 @@ properties:
     type: integer
     format: int64
     description: id of transaction
+  type:
+    type: string
+    enum: [ transaction ]

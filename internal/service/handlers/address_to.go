@@ -4,16 +4,14 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/kish1n/usdt_listening/internal/data"
 	"github.com/kish1n/usdt_listening/internal/service/request"
-	"github.com/kish1n/usdt_listening/resources"
 	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/ape/problems"
 
 	"net/http"
 )
 
-func SortBySender(w http.ResponseWriter, r *http.Request) {
+func SortByOrder(w http.ResponseWriter, r *http.Request) {
 	address := strings.ToLower(chi.URLParam(r, "address"))
 
 	req, err := request.GetAddress(r)
@@ -54,23 +52,4 @@ func SortBySender(w http.ResponseWriter, r *http.Request) {
 		}{TrxsCount})
 	}
 	ape.Render(w, resp)
-}
-
-func NewTransactionResponseList(trxs []data.Transaction) (resources.TransactionListResponse, error) {
-	list := make([]resources.Transaction, len(trxs))
-	for i, trx := range trxs {
-		list[i] = resources.Transaction{
-			Key: resources.Key{
-				ID:   trx.Id,
-				Type: resources.TRANSACTION,
-			},
-			Attributes: resources.TransactionAttributes{
-				CreatedAt:   trx.CreatedAt,
-				FromAddress: trx.FromAddress,
-				ToAddress:   trx.ToAddress,
-				Value:       int(trx.Value),
-			},
-		}
-	}
-	return resources.TransactionListResponse{Data: list}, nil
 }

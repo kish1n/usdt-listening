@@ -1,12 +1,12 @@
 package service
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi"
 	"github.com/kish1n/usdt_listening/internal/config"
-	"github.com/kish1n/usdt_listening/internal/data/pg"
 	"github.com/kish1n/usdt_listening/internal/service/handlers"
 	"gitlab.com/distributed_lab/ape"
-	"net/http"
 )
 
 func (s *service) router(cfg config.Config) (chi.Router, error) {
@@ -18,14 +18,14 @@ func (s *service) router(cfg config.Config) (chi.Router, error) {
 		ape.LoganMiddleware(s.log),
 		ape.CtxMiddleware(
 			handlers.CtxLog(s.log),
-			handlers.CtxDB(pg.NewMasterQ(cfg.DB())),
 		),
+		handlers.DBCloneMiddleware(cfg.DB()),
 	)
 
 	r.Route("/", func(r chi.Router) {
 		r.Get("/listen", handlers.ListenForTransfers)
-		r.Get("/from/{from_address}", handlers.SortBySender)
-		r.Get("/to/{to_address}", handlers.SortByRecipient)
+		r.Get("/from/{address}", handlers.SortBySender)
+		r.Get("/to/{address}", handlers.SortByOrder)
 		r.Get("/by/{address}", handlers.SortByAddress)
 	})
 

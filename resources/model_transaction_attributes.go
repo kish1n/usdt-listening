@@ -11,8 +11,6 @@ type TransactionAttributes struct {
 	CreatedAt time.Time `json:"created_at"`
 	// user address
 	FromAddress string `json:"from_address"`
-	// id deal
-	Id string `json:"id"`
 	// user address
 	ToAddress string `json:"to_address"`
 	// exchange value

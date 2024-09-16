@@ -1,58 +1,55 @@
 package handlers
 
 import (
-	"github.com/kish1n/usdt_listening/internal/data"
-	"github.com/kish1n/usdt_listening/internal/service/errors/apierrors"
-	"github.com/kish1n/usdt_listening/internal/service/helpers"
+	"strings"
+
+	"github.com/go-chi/chi"
+	"github.com/kish1n/usdt_listening/internal/service/request"
 	"gitlab.com/distributed_lab/ape"
+	"gitlab.com/distributed_lab/ape/problems"
+
 	"net/http"
 )
 
-func SortByRecipient(w http.ResponseWriter, r *http.Request) {
-	logger := Log(r)
-	db := DB(r)
-
-	address, err := helpers.GetAddress(r, "to_address")
-	res, err := db.Link().SortByParameter(address, "to_address")
-
-	if res == nil {
-		apierrors.ErrorConstructor(w, *logger, err, "404 not found", "404", "Not Found", "Not found transaction to this address")
-		return
-	}
-
-	if err != nil {
-		apierrors.ErrorConstructor(w, *logger, err, "Server error", "500", "Server error 500", "Unpredictable behavior")
-		return
-	}
-
-	logger.Infof("res: %s", res)
-	ape.Render(w, res)
-	return
-}
-
 func SortByAddress(w http.ResponseWriter, r *http.Request) {
-	logger := Log(r)
-	db := DB(r)
+	address := strings.ToLower(chi.URLParam(r, "address"))
 
-	address, err := helpers.GetAddress(r, "address")
-	start, err := db.Link().SortByParameter(address, "to_address")
-	end, err := db.Link().SortByParameter(address, "from_address")
-
-	if end == nil && start == nil {
-		apierrors.ErrorConstructor(w, *logger, err, "404 not found", "404", "Not Found", "Not found transaction at this address")
-		return
-	}
-
+	req, err := request.GetAddress(r)
 	if err != nil {
-		apierrors.ErrorConstructor(w, *logger, err, "Server error", "500", "Server error 500", "Unpredictable behavior")
+		Log(r).WithError(err).Error("error getting address")
+		ape.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	response := map[string][]data.TransactionData{
-		"send": start,
+	transactions, err := TransactionQ(r).Page(&req.OffsetPageParams).Select()
+	if err != nil {
+		Log(r).WithError(err).Error("Error getting transaction")
+		ape.RenderErr(w, problems.InternalError())
+		return
+	}
+	if transactions == nil {
+		Log(r).Error("Transactions by this address:%s not found", address)
+		ape.RenderErr(w, problems.NotFound())
+		return
 	}
 
-	logger.Infof("res: %s", response)
-	ape.Render(w, response)
-	return
+	resp, err := NewTransactionResponseList(transactions)
+	if err != nil {
+		Log(r).WithError(err).Error("Error creating transaction list")
+		ape.RenderErr(w, problems.InternalError())
+		return
+	}
+	TrxsCount, err := TransactionQ(r).FilterByAddress(address).Count()
+	if err != nil {
+		Log(r).WithError(err).Error("Error getting transaction count")
+		ape.RenderErr(w, problems.InternalError())
+		return
+	}
+	resp.Links = req.GetLinks(r, uint64(TrxsCount))
+	if req.Count {
+		_ = resp.PutMeta(struct {
+			TransactionCount int64 `json:"transaction_count"`
+		}{TrxsCount})
+	}
+	ape.Render(w, resp)
 }
