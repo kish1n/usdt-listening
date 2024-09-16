@@ -3,10 +3,10 @@ log:
   disable_sentry: true
 
 db:
-  url: postgres://postgres:usdt@localhost:5440/postgres?sslmode=disable
+  url: postgres://usdt:usdt@localhost:usdt/postgres?sslmode=disable
 
 listener:
-  addr: :8000
+  addr: localhost:8000
 
 cop:
   disabled: true
@@ -14,3 +14,5 @@ cop:
   upstream: "http://..."
   service_name: usdt_listening
   service_port: 80
+
+api_key: 02b3e560f25f4d0db54c9fa4519c7c24

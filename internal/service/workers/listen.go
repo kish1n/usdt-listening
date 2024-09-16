@@ -31,7 +31,7 @@ type Transfer struct {
 }
 
 func ListenForTransfers(ctx context.Context, cfg config.Config) {
-	ProjectID := "02b3e560f25f4d0db54c9fa4519c7c24"
+	ProjectID := os.Getenv("api_key")
 	log := cfg.Log()
 
 	log.Info(ProjectID)
@@ -123,7 +123,5 @@ func ListenForTransfers(ctx context.Context, cfg config.Config) {
 	case <-ctx.Done():
 		log.Info("Context cancelled, shutting down...")
 	}
-
-	time.Sleep(2 * time.Second)
 	log.Info("Process terminated gracefully")
 }
